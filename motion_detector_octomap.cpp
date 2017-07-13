@@ -21,19 +21,31 @@ float x;
 float y;
 float z;
 int i;
-float motionPoints[100][4];
+int g;
+float motionPoints[1000000][5];
 int spots = 100;
+int points = 0;
 
 void motionList()
 {
-    for(i = 1; motionPoints[i][1] != 0  && i != spots+1; i++)
-    if(i > spots)
+    for(g = 0; g <= points; g++)
     {
-       spots = spots + 10;
-       motionPoints.resize(spots);
+       
     }
+    if(g > points)
+    {
+      for(i = 1; motionPoints[i][1] != 0  && i != spots+1; i++);
+      if(i == spots + 1)
+      {
+         ROS_FATAL_STREAM("No room left to store point.");
+      }
 
-
+      motionPoints[i][1] = 1;
+      motionPoints[i][2] = x;
+      motionPoints[i][3] = y;
+      motionPoints[i][4] = z;
+      motionPoints[i][5] = 1;
+    }
 }
 void test(const octomap_msgs::Octomap &msg)
 {
