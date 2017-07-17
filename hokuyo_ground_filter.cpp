@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "hokuyo_ground_filter");
     ros::NodeHandle nh;
     ros::Subscriber sub_1=nh.subscribe<std_msgs::Float64>("/max_z", 1, &obtainZ);
-    ros::Subscriber sub_2=nh.subscribe<sensor_msgs::PointCloud2>("/assembled_cloud", 1, &filterGround);
+    ros::Subscriber sub_2=nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &filterGround);
     pub=nh.advertise<sensor_msgs::PointCloud2>("pcl_test", 1);
     ros::spin();
     return 0;

@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 {
    ros::init(argc, argv, "pcl_Conversion");
    ros::NodeHandle nh;
-   ros::Subscriber sub=nh.subscribe<sensor_msgs::PointCloud2>("/assembled_cloud", 1, &pclConversion);
+   ros::Subscriber sub=nh.subscribe<sensor_msgs::PointCloud2>("/planes_pointcloud", 1, &pclConversion);
    //typedef pcl::PointCloud<pcl::PointXYZ> PCLCloud;
    //pub=nh.advertise<PCLCloud>("pcl_test", 1);
 
