@@ -17,9 +17,9 @@ include_directories(${PCL_INCLUDE_DIRS})
 add_executable(octomap_test octomap_test.cpp)
 target_link_libraries(octomap_test ${catkin_LIBRARIES})
 
-add_executable(pcl_Conversion pointCloud2_to_pcl.cpp)
-target_link_libraries(pcl_Conversion ${catkin_LIBRARIES})
-target_link_libraries(pcl_Conversion ${PCL_LIBRARIES})
+add_executable(max_z max_z.cpp)
+target_link_libraries(max_z ${catkin_LIBRARIES})
+target_link_libraries(max_z ${PCL_LIBRARIES})
 
 add_executable(hokuyo_ground_filter hokuyo_ground_filter.cpp)
 target_link_libraries(hokuyo_ground_filter ${catkin_LIBRARIES})
