@@ -92,7 +92,7 @@ public:
         factor = 1.0f / (max_range - min_range);
         offset = -min_range;
 
-        subCloud = nh.subscribe<sensor_msgs::PointCloud2>("/voxel_grid/output", 1, &PlaneExtractionRANSAC::cloudHandler, this);
+        subCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &PlaneExtractionRANSAC::cloudHandler, this);
         pubCloud = nh.advertise<sensor_msgs::PointCloud2> ("/planes_pointcloud", 1);  
 
         pubImage = it.advertise("/image_out", 1);
@@ -100,12 +100,12 @@ public:
         allocateMemory();
     }
 
-     void allocateMemory(){
+    void allocateMemory(){
 
-         laserCloudIn.reset(new pcl::PointCloud<PointType>());
-         laserCloudOut.reset(new pcl::PointCloud<PointType>());
+        laserCloudIn.reset(new pcl::PointCloud<PointType>());
+        laserCloudOut.reset(new pcl::PointCloud<PointType>());
 
-     }
+    }
 
     ~PlaneExtractionRANSAC(){}
 
@@ -140,14 +140,12 @@ vector<vector<float>> planeExtraction_RANSAC(vector<vector<float>> points, float
 		idx[i] = i;
 	}
 	// ransac
-	long iter_ransac = 500, ptr_best_model = 0, num_points_max = 0;
+	long iter_ransac = 50, ptr_best_model = 0, num_points_max = 0;
 	vector<vector<int>> models(iter_ransac, std::vector<int>(3,0));
 	vector<long> pts_each_model(iter_ransac, 0);
 	vector<float> planeNorm(3, 0), tmpO(3, 0), tmpA(3, 0), tmpB(3, 0);   //dists(points.size(), 0),
 
-
 	for(int i=0;i<iter_ransac;i++) {
-
 		// shuffle points
 		std::random_shuffle(idx.begin(), idx.end());
 
@@ -237,7 +235,7 @@ vector<vector<float>> planeExtraction_RANSAC(vector<vector<float>> points, float
         pcl::toROSMsg(*laserCloudOut, laserCloudFull);
 
         laserCloudFull.header.stamp = ros::Time();
-        laserCloudFull.header.frame_id = "map";
+        laserCloudFull.header.frame_id = "/map";
         // ROS_INFO("publishing point cloud in the largest plane");
         pubCloud.publish(laserCloudFull);
 
@@ -252,7 +250,6 @@ vector<vector<float>> planeExtraction_RANSAC(vector<vector<float>> points, float
 int main(int argc, char** argv){
 
     ros::init(argc, argv, "plane_extract_ransac");
-    
     PlaneExtractionRANSAC PS;
 
     //ROS_INFO(" Extracting planes using RANSAC...");
@@ -260,7 +257,3 @@ int main(int argc, char** argv){
     ros::spin();
     return 0;
 }
-
-
-
-

@@ -145,7 +145,6 @@
     <node pkg="motion_hokuyo" type="hokuyo_ground_filter" name="hokuyo_ground_filter"/>
 
     <node pkg="motion_hokuyo" type="plane_extract_ransac" name="plane_extract_ransac">
-    	<remap from="assembled_cloud" to="/voxel_grid/output" />
     </node>
 
     <node pkg="motion_hokuyo" type="max_z" name="max_z">
