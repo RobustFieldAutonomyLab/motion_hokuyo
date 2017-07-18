@@ -57,4 +57,5 @@ int main( int argc, char** argv ) {
   	ros::NodeHandle n;
   	ros::Subscriber array_sub = n.subscribe("/filtered_octo", 1, markerPublisher);
   	ma_pub = n.advertise<visualization_msgs::MarkerArray>("filtered_octo_marker", 1);
+  	ros::spin();
 }
