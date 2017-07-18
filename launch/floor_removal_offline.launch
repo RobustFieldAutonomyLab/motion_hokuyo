@@ -79,7 +79,7 @@
     pkg="rviz"
     type="rviz"
     name="rviz"
-    args="-d $(find spin_hokuyo)/rviz_cfg/removed_floor.rviz"/>
+    args="-d $(find motion_hokuyo)/rviz_cfg/removed_floor.rviz"/>
    />
 
   <node pkg="tf" type="static_transform_publisher" name="servo_to_velodyne"
@@ -126,7 +126,7 @@
          <param name="resolution" value="0.3" />
          <param name="frame_id" type="string" value="map" />
          <param name="sensor_model/max_range" value="300.0" />
-         <remap from="cloud_in" to="/voxel_grid/output" />
+         <remap from="cloud_in" to="/pcl_test" />
     </node>
 
     <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
@@ -154,9 +154,9 @@
 
     <arg name="path"/>
     <arg name="speed" default="1"/>
-<!--    <arg name="other" default=""/>
-    <arg name="topics" default=""/> -->
-<!--    <node pkg="rosbag" type="play" name="player" output="screen" args="$(arg path) -r $(arg speed) topics /tf /velodyne_points /scan clock" /> -->
+    <arg name="other" default=""/>
+    <arg name="topics" default=""/>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="$(arg path) -r $(arg speed) --topics /tf /velodyne_points /scan --clock" />
 
 
 </launch>
