@@ -7,7 +7,7 @@
 #include <octomap/OcTreeNode.h>
 #include <octomap/AbstractOccupancyOcTree.h>
 #include <vector>
-#include <std_msgs/Int32MultiArray.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/MultiArrayLayout.h>
 #include <std_msgs/MultiArrayDimension.h>
 #include <octomap/OcTreeBaseImpl.h>
@@ -106,7 +106,7 @@ void publisher()
 ROS_WARN_STREAM("*");
     filterNoise();
    // condenceList();
-    std_msgs::Int32MultiArray array;
+    std_msgs::Float32MultiArray array;
     array.data.clear();
 
     for(i = 1; i <= points*offset; i++)
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "octomap_test");
     ros::NodeHandle nh;
     ros::Subscriber sub=nh.subscribe("/octomap_full", 1, &test);
-    pub=nh.advertise<std_msgs::Int32MultiArray>("filtered_octo", 1);
+    pub=nh.advertise<std_msgs::FloatMultiArray>("filtered_octo", 1);
     ros::spin();
     return 0;
 }
