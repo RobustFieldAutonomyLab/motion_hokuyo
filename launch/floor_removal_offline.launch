@@ -144,7 +144,7 @@
 
     <node pkg="motion_hokuyo" type="hokuyo_ground_filter" name="hokuyo_ground_filter"/>
 
-    <node pkg="plane_extract_ransac" type="plane_extract_ransac" name="plane_extract_ransac">
+    <node pkg="motion_hokuyo" type="plane_extract_ransac" name="plane_extract_ransac">
     	<remap from="assembled_cloud" to="/voxel_grid/output" />
     </node>
 
