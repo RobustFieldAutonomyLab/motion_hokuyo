@@ -36,31 +36,46 @@ bool present;
 int p;
 int last = -5;
 ros::Publisher pub;
+float tolerance = 0.001;
+int runs = 0;
 
 //remove a point from the list
 void deleteSpot()
 {
-    motionPoints.erase(motionPoints.begin()+p-1, motionPoints.begin()+p+4);
-
+//ROS_ERROR_STREAM(p);
+    motionPoints.erase(motionPoints.begin()+p-1, motionPoints.begin()+p+5);
     points--;
+/*ROS_ERROR_STREAM("*");
+ROS_INFO_STREAM(motionPoints[p]);
+ROS_INFO_STREAM(motionPoints[p+1]);
+ROS_INFO_STREAM(motionPoints[p+2]);
+ROS_INFO_STREAM(motionPoints[p+3]);
+ROS_INFO_STREAM(motionPoints[p+4]);
+ROS_INFO_STREAM(motionPoints[p+5]);*/
 }
 
-//using a 75% non-dynamic filter
+//using a 33% non-dynamic filter
 void filterNoise()
 {
-    p=1;
+    p = 1;
 
     for(i = 1; i <= points; i++)
     {
 
        float ratio = motionPoints[p+5]/(motionPoints[p+4]+motionPoints[p+5]);
        
-       if(ratio >= 0.75)
+//ROS_WARN_STREAM(ratio);
+       if(ratio >= 0.33)
        {
           deleteSpot();
        }
 
-       p=p+offset;
+       if(motionPoints[p+5]+motionPoints[p+4] < runs - 3 || motionPoints[p+5]+motionPoints[p+4] > runs + 3)
+       {
+          deleteSpot();
+       }
+
+       p = p + offset;
     }
 }
 
@@ -71,7 +86,7 @@ void publisher()
     std_msgs::Float32MultiArray array;
     array.data.clear();
 int count;
-    for(i = 1; i <= points*offset; i++)
+    for(i = 0; i <= points*offset; i++)
     {
 count++;
        array.data.push_back(motionPoints[i]);
@@ -79,6 +94,11 @@ count++;
 
 ROS_INFO_STREAM(count);
     pub.publish(array);
+/*ROS_ERROR_STREAM("published");
+ROS_WARN_STREAM(motionPoints[0]);
+ROS_INFO_STREAM(motionPoints[1]);
+ROS_WARN_STREAM(motionPoints[2]);
+ROS_INFO_STREAM(motionPoints[3]);*/
 }
 
 //add a new point to the list
@@ -91,20 +111,30 @@ void writeSpot()
     motionPoints.push_back(1);
     motionPoints.push_back(0);
 
+/*ROS_ERROR_STREAM("*");
+ROS_INFO_STREAM(motionPoints[p]);
+ROS_INFO_STREAM(motionPoints[p+1]);
+ROS_INFO_STREAM(motionPoints[p+2]);
+ROS_INFO_STREAM(motionPoints[p+3]);
+ROS_INFO_STREAM(motionPoints[p+4]);
+ROS_INFO_STREAM(motionPoints[p+5]);*/
+
     points++;
 }
 
 //Determine if point is on list
 bool searchList()
 {
+    p = 1;
+
     for(i = 1; i <= points; i++)
     {
-       p=1;
-
-       if(motionPoints[p+1] == x && motionPoints[p+2] == y && motionPoints[p+3] == z)
+       if((motionPoints[p+1] <= x + tolerance && motionPoints[p+1] >= x - tolerance) && (motionPoints[p+2] <= y + tolerance && motionPoints[p+2] >= y - tolerance) && (motionPoints[p+3] <= z + tolerance && motionPoints[p+3] >= z - tolerance))
        {
           return true;
        }
+
+       p = p + offset;
     }
 
     return false;
@@ -140,6 +170,8 @@ void subtractMotionList()
 //Locate Possible Dynamic Points
 void test(const octomap_msgs::Octomap &msg)
 {
+    runs++;
+
     if(initialize == 0)
     {
        oldTree = msgToMap(msg);
@@ -152,11 +184,14 @@ void test(const octomap_msgs::Octomap &msg)
        newTree = msgToMap(msg);
        newOctree = dynamic_cast<octomap::OcTree*>(newTree);
 
+//ROS_WARN_STREAM("*");
+
        for(octomap::OcTree::leaf_iterator it = newOctree->begin_leafs(), end=newOctree->end_leafs(); it!=end; ++it)
        {
            x = it.getX();
            y = it.getY();
            z = it.getZ();
+//ROS_INFO_STREAM("arrived");
 
            if(oldOctree->search(x,y,z) != NULL)
            {
@@ -188,6 +223,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::Subscriber sub=nh.subscribe("/octomap_full", 1, &test);
     pub=nh.advertise<std_msgs::Float32MultiArray>("filtered_octo", 1);
+    motionPoints.push_back(0);
     ros::spin();
     return 0;
 }
