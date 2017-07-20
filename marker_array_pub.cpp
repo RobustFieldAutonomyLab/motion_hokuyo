@@ -20,17 +20,14 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 	visualization_msgs::Marker marker;
 	visualization_msgs::MarkerArray markerArray;
 
-	int t = 0;
-
 	points.clear();
 	for (std::vector<float>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it){
 		points.push_back(*it);
-		t++;
 	}
 
 	ROS_INFO_STREAM("Finished for loop one");
 
-	for(int i=1; i<=msg->data.size(); i+=6) {
+	for(int i = 1; i < msg->data.size(); i +=6) {
 		marker.header.frame_id = "/map";
 		marker.header.stamp = ros::Time::now();
 		marker.ns = "motion_array";
@@ -39,7 +36,7 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
     	marker.action = visualization_msgs::Marker::ADD;
 
     	//double scale = octomap::OcTreeBaseImpl->getResolution();
-    	double scale = 0.3;
+    	double scale = 0.1;
     	marker.scale.x = scale;
     	marker.scale.y = scale;
     	marker.scale.z = scale;

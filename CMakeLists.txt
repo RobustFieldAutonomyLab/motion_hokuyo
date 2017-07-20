@@ -53,3 +53,6 @@ target_link_libraries(marker_array_pub ${catkin_LIBRARIES})
 
 add_executable(plane_extract_ransac plane_extract_ransac.cpp)
 target_link_libraries(plane_extract_ransac ${catkin_LIBRARIES})
+
+#add_executable(object_detector_test object_detector_test.cpp)
+#target_link_libraries(object_detector_test ${catkin_LIBRARIES})
