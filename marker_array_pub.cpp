@@ -29,7 +29,7 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 	}
 
 	ROS_INFO_STREAM("Finished for loop one");
-
+	//markerArray.action = 3;
 	for(int i=1; i<=msg->data.size(); i+=6) {
 		marker.header.frame_id = "/map";
 		marker.header.stamp = ros::Time::now();
