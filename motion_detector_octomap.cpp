@@ -11,6 +11,7 @@
 #include <std_msgs/MultiArrayLayout.h>
 #include <std_msgs/MultiArrayDimension.h>
 #include <octomap/OcTreeBaseImpl.h>
+#include <std_msgs/Float64.h>
 
 using namespace std;
 octomap::OcTreeNode* oldNode;
@@ -35,7 +36,8 @@ vector<float> motionPoints;
 bool present;
 int p;
 int last = -5;
-ros::Publisher pub;
+ros::Publisher pub_1;
+ros::Publisher pub_2;
 float tolerance = 0.001;
 int runs = 0;
 
@@ -58,25 +60,47 @@ ROS_INFO_STREAM(motionPoints[p+5]);*/
 void filterNoise()
 {
     p = 1;
+    int hold = points;
 
-    for(i = 1; i <= points; i++)
+    for(i = 1; i <= hold; i++)
     {
-
        float ratio = motionPoints[p+5]/(motionPoints[p+4]+motionPoints[p+5]);
        
 //ROS_WARN_STREAM(ratio);
-       if(ratio >= 0.33)
+       if(ratio >= 0.75)
        {
           deleteSpot();
        }
 
-       if(motionPoints[p+5]+motionPoints[p+4] < runs - 3 || motionPoints[p+5]+motionPoints[p+4] > runs + 3)
+       else
        {
-          deleteSpot();
+          p = p + offset;
        }
-
-       p = p + offset;
     }
+
+    hold = points;
+    p = 1;
+
+    for(i = 1; i <= hold; i++)
+    {
+
+       float seen = (motionPoints[p+5] + motionPoints[p+4])/runs;
+/*ROS_ERROR_STREAM("*");
+ROS_INFO_STREAM(motionPoints[p+5]);
+ROS_WARN_STREAM(motionPoints[p+4]);
+ROS_INFO_STREAM(runs);*/
+ROS_WARN_STREAM(seen);
+       if(seen < 0.25)
+       {
+          deleteSpot();
+       }
+
+       else
+       {
+          p = p + offset;
+       }
+     }
+    
 }
 
 //send out filtered list
@@ -85,20 +109,21 @@ void publisher()
     filterNoise();
     std_msgs::Float32MultiArray array;
     array.data.clear();
-int count;
+    int count;
     for(i = 0; i <= points*offset; i++)
     {
-count++;
+       count++;
        array.data.push_back(motionPoints[i]);
     }
 
 ROS_INFO_STREAM(count);
-    pub.publish(array);
-/*ROS_ERROR_STREAM("published");
-ROS_WARN_STREAM(motionPoints[0]);
-ROS_INFO_STREAM(motionPoints[1]);
-ROS_WARN_STREAM(motionPoints[2]);
-ROS_INFO_STREAM(motionPoints[3]);*/
+    pub_1.publish(array);
+//ROS_ERROR_STREAM("published");
+
+std_msgs::Float64 total;
+total.data = (count - 1) / 6;
+pub_2.publish(total);
+ROS_WARN_STREAM("count sent");
 }
 
 //add a new point to the list
@@ -184,14 +209,11 @@ void test(const octomap_msgs::Octomap &msg)
        newTree = msgToMap(msg);
        newOctree = dynamic_cast<octomap::OcTree*>(newTree);
 
-//ROS_WARN_STREAM("*");
-
        for(octomap::OcTree::leaf_iterator it = newOctree->begin_leafs(), end=newOctree->end_leafs(); it!=end; ++it)
        {
            x = it.getX();
            y = it.getY();
            z = it.getZ();
-//ROS_INFO_STREAM("arrived");
 
            if(oldOctree->search(x,y,z) != NULL)
            {
@@ -222,7 +244,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "octomap_test");
     ros::NodeHandle nh;
     ros::Subscriber sub=nh.subscribe("/octomap_full", 1, &test);
-    pub=nh.advertise<std_msgs::Float32MultiArray>("filtered_octo", 1);
+    pub_1=nh.advertise<std_msgs::Float32MultiArray>("filtered_octo", 1);
+    pub_2=nh.advertise<std_msgs::Float64>("motion_points", 1);
     motionPoints.push_back(0);
     ros::spin();
     return 0;
