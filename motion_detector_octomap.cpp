@@ -27,125 +27,17 @@ float x;
 float y;
 float z;
 int i;
-int g;
-int h;
-int j;
 int offset = 6;
 int points = 0;
 vector<float> motionPoints;
+vector<float> holder;
 bool present;
 int p;
-int last = -5;
 ros::Publisher pub_1;
 ros::Publisher pub_2;
-float tolerance = 0.001;
-int runs = 0;
-
-//remove a point from the list
-void deleteSpot()
-{
-//ROS_ERROR_STREAM(p);
-    motionPoints.erase(motionPoints.begin()+p-1, motionPoints.begin()+p+5);
-    points--;
-/*ROS_ERROR_STREAM("*");
-ROS_INFO_STREAM(motionPoints[p]);
-ROS_INFO_STREAM(motionPoints[p+1]);
-ROS_INFO_STREAM(motionPoints[p+2]);
-ROS_INFO_STREAM(motionPoints[p+3]);
-ROS_INFO_STREAM(motionPoints[p+4]);
-ROS_INFO_STREAM(motionPoints[p+5]);*/
-}
-
-//using a 33% non-dynamic filter
-void filterNoise()
-{
-    p = 1;
-    int hold = points;
-
-    for(i = 1; i <= hold; i++)
-    {
-       float ratio = motionPoints[p+5]/(motionPoints[p+4]+motionPoints[p+5]);
-       
-//ROS_WARN_STREAM(ratio);
-       if(ratio >= 0.75)
-       {
-          deleteSpot();
-       }
-
-       else
-       {
-          p = p + offset;
-       }
-    }
-
-    hold = points;
-    p = 1;
-
-    for(i = 1; i <= hold; i++)
-    {
-
-       float seen = (motionPoints[p+5] + motionPoints[p+4])/runs;
-/*ROS_ERROR_STREAM("*");
-ROS_INFO_STREAM(motionPoints[p+5]);
-ROS_WARN_STREAM(motionPoints[p+4]);
-ROS_INFO_STREAM(runs);*/
-ROS_WARN_STREAM(seen);
-       if(seen < 0.25)
-       {
-          deleteSpot();
-       }
-
-       else
-       {
-          p = p + offset;
-       }
-     }
-    
-}
-
-//send out filtered list
-void publisher()
-{
-    filterNoise();
-    std_msgs::Float32MultiArray array;
-    array.data.clear();
-    int count;
-    for(i = 0; i <= points*offset; i++)
-    {
-       count++;
-       array.data.push_back(motionPoints[i]);
-    }
-
-ROS_INFO_STREAM(count);
-    pub_1.publish(array);
-//ROS_ERROR_STREAM("published");
-
-std_msgs::Float64 total;
-total.data = (count - 1) / 6;
-pub_2.publish(total);
-ROS_WARN_STREAM("count sent");
-}
-
-//add a new point to the list
-void writeSpot()
-{
-    motionPoints.push_back(1);
-    motionPoints.push_back(x);
-    motionPoints.push_back(y);
-    motionPoints.push_back(z);
-    motionPoints.push_back(1);
-    motionPoints.push_back(0);
-
-/*ROS_ERROR_STREAM("*");
-ROS_INFO_STREAM(motionPoints[p]);
-ROS_INFO_STREAM(motionPoints[p+1]);
-ROS_INFO_STREAM(motionPoints[p+2]);
-ROS_INFO_STREAM(motionPoints[p+3]);
-ROS_INFO_STREAM(motionPoints[p+4]);
-ROS_INFO_STREAM(motionPoints[p+5]);*/
-
-    points++;
-}
+int runs = -1;
+int tolerance = 0;
+float ratioThresh = 0.5;
 
 //Determine if point is on list
 bool searchList()
@@ -154,7 +46,7 @@ bool searchList()
 
     for(i = 1; i <= points; i++)
     {
-       if((motionPoints[p+1] <= x + tolerance && motionPoints[p+1] >= x - tolerance) && (motionPoints[p+2] <= y + tolerance && motionPoints[p+2] >= y - tolerance) && (motionPoints[p+3] <= z + tolerance && motionPoints[p+3] >= z - tolerance))
+       if((motionPoints[p+1] == x) && (motionPoints[p+2] == y) && (motionPoints[p+3] == z))
        {
           return true;
        }
@@ -164,6 +56,131 @@ bool searchList()
 
     return false;
 }
+
+//Correct Deletion Errors
+void correction()
+{
+    int s = 1;
+    
+    for(int l = 1; l <= points; l++)
+    {
+       x = holder[s+1];
+       y = holder[s+2];
+       z = holder[s+3];
+
+       int k = 1;
+
+       for(int t = 1; t <= points; t++)
+       {
+          if(motionPoints[k+1] == x && motionPoints[k+2] == y && motionPoints[k+3] == z)
+          {
+              motionPoints[k+5] = holder[s+5];
+          }
+
+          k = k + offset;
+       }
+ 
+       s = s + offset;
+   }
+}
+
+//remove a point from the list
+void deleteSpot()
+{
+    motionPoints.erase(motionPoints.begin()+p-1, motionPoints.begin()+p+5);
+    points--;
+}
+
+//using a 66% non-dynamic filter
+void filterNoise()
+{
+    p = 1;
+    int hold = points;
+
+    for(i = 1; i <= hold; i++)
+    {
+       float ratio = abs(motionPoints[p+5])/(motionPoints[p+4]+abs(motionPoints[p+5]));
+
+       if(ratio >= ratioThresh)
+       {
+          holder = motionPoints;
+          deleteSpot();
+          correction();
+       }
+
+       if(ratio < ratioThresh)
+       {
+          p = p + offset;
+       }
+    }
+}
+
+void filterUnobserved()
+{
+    int hold = points;
+    p = 1;
+
+    for(i = 1; i <= hold; i++)
+    {
+       int observed = runs - motionPoints[p] + 1;
+       float seen = (abs(motionPoints[p+5]) + motionPoints[p+4])/observed;
+
+       if(seen < 0.66)
+       {
+          holder = motionPoints;
+          deleteSpot();
+          correction();
+       }
+
+       else
+       {
+          p = p + offset;
+       }
+     }    
+}
+
+//send out filtered list
+void publisher()
+{
+    filterNoise();
+    filterUnobserved();
+    std_msgs::Float32MultiArray array;
+    array.data.clear();
+    int count;
+
+    for(i = 0; i <= points*offset; i++)
+    {
+       count++;
+       array.data.push_back(motionPoints[i]);
+    }
+
+    for(i = 1; i <= points; i++)
+    {
+       p = p + offset;
+    }
+
+    ROS_INFO_STREAM(count);
+
+    pub_1.publish(array);
+
+    std_msgs::Float64 total;
+    total.data = (count - 1) / offset;
+    pub_2.publish(total);
+}
+
+void writeSpot()
+{
+    motionPoints.push_back(runs);
+    motionPoints.push_back(x);
+    motionPoints.push_back(y);
+    motionPoints.push_back(z);
+    motionPoints.push_back(1);
+    motionPoints.push_back(0);
+
+    points++;
+}
+
+
 
 //Add/Update a Point to the List
 void addMotionList()
@@ -188,7 +205,7 @@ void subtractMotionList()
 
     if(present == true)
     {
-       motionPoints[p+5] = motionPoints[p+5] + 1;
+       motionPoints[p+5] = motionPoints[p+5] - 1;
     }
 }
 
@@ -202,6 +219,7 @@ void test(const octomap_msgs::Octomap &msg)
        oldTree = msgToMap(msg);
        oldOctree = dynamic_cast<octomap::OcTree*>(oldTree);
        initialize = 1;
+       return;
     }
 
     else
@@ -234,6 +252,8 @@ void test(const octomap_msgs::Octomap &msg)
               }
            }
        }
+
+       oldOctree->clear();
        oldOctree = newOctree;
        publisher();
     }
