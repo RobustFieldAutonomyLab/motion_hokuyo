@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /MarkerArray1
+        - /Axes1
       Splitter Ratio: 0.5
     Tree Height: 747
   - Class: rviz/Selection
@@ -55,6 +57,13 @@ Visualization Manager:
       Namespaces:
         map: true
       Queue Size: 100
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 1
+      Name: Axes
+      Radius: 0.1
+      Reference Frame: base_link
       Value: true
   Enabled: true
   Global Options:
@@ -113,5 +122,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 927
-  X: 55
+  X: 962
   Y: 14

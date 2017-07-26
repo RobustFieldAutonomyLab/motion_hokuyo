@@ -238,6 +238,7 @@ vector<vector<float>> planeExtraction_RANSAC(vector<vector<float>> points, float
         laserCloudFull.header.frame_id = "/map";
         // ROS_INFO("publishing point cloud in the largest plane");
         pubCloud.publish(laserCloudFull);
+        ros::Duration(2).sleep();
 
     }
 

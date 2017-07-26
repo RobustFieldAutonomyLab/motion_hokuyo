@@ -65,7 +65,7 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 int main(int argc, char **argv ) {
   	ros::init(argc, argv, "marker_array_pub");
   	ros::NodeHandle n;
-  	ros::Subscriber array_sub = n.subscribe("/filterd_octo", 1, markerPublisher);
-  	ma_pub = n.advertise<visualization_msgs::MarkerArray>("filtered_octo_marker", 1);
+  	ros::Subscriber array_sub = n.subscribe("/objects", 1, markerPublisher);
+  	ma_pub = n.advertise<visualization_msgs::MarkerArray>("objects_marker", 1);
   	ros::spin();
 }

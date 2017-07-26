@@ -11,14 +11,13 @@ vector<float> masterList;
 vector<vector<float>> object;
 int n = 0;
 bool go;
-float threshold = 0.5;
+float threshold = 0.3;
 int obtain = 0;
 float total;
 int offset = 6;
 int qualifier = 10;
 int initialize = 0;
-float near = 0.05;
-int measure = 0;
+ros::Publisher pub_1;
 
 void redo(int k, int jump, int miner, int maxer)
 {
@@ -253,6 +252,24 @@ void deadPoints()
     }
 }
 
+void visualPublisher()
+{
+    std_msgs::Float32MultiArray array;
+    array.data.clear();
+
+    array.data.push_back(0);
+
+    for(int k = 1; k <= n; k++)
+    {
+        for(int j = 7; j <= object[k][0] * offset; j++)
+        {
+           array.data.push_back(object[k][j]);
+        }
+    }
+
+    pub_1.publish(array);
+}
+
 void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
 {
     masterList.clear();
@@ -285,7 +302,10 @@ void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
           {
               findNeighbors(i * offset + 1);
           }
-
+if(object[n][0] >= 10)
+{
+ROS_ERROR_STREAM(object[n][0]);
+}
           if(object[n][0] <= qualifier)
           {
               removeObject(n);
@@ -293,7 +313,8 @@ void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
        }
     }
 
-    ROS_WARN_STREAM(n);
+   // ROS_WARN_STREAM(n);
+    visualPublisher();
 }
 
 
@@ -303,6 +324,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::Subscriber sub_1=nh.subscribe("/filtered_octo", 1, &objectID);
     object.push_back(vector<float>()); //occupies object[0]
+    pub_1=nh.advertise<std_msgs::Float32MultiArray>("objects", 1);
     ros::spin();
     return 0;
 }

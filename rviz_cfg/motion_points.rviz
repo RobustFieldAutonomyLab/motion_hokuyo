@@ -63,7 +63,7 @@ Visualization Manager:
       Marker Topic: /filtered_octo_marker
       Name: MarkerArray
       Namespaces:
-        motion_array: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -123,5 +123,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 927
-  X: 65
-  Y: 24
+  X: 982
+  Y: 14

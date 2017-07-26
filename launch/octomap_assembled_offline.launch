@@ -70,9 +70,9 @@
 -->
 
 <node
-   pkg="spin_hokuyo"
-   type="hokuyo_robot_filter"
-   name="hokuyo_robot_filter"
+   pkg="tilting_lidar_clean"
+   type="hokuyo_filter"
+   name="hokuyo_filter"
    output="screen"
 />
 
@@ -80,7 +80,7 @@
     pkg="rviz"
     type="rviz"
     name="rviz"
-    args="-d $(find motion_hokuyo)/rviz_cfg/combined_octomap.rviz"/>
+    args="-d $(find tilting_lidar_clean)/rviz_cfg/tilting_lidar.rviz"/>
    />
 
   <node pkg="tf" type="static_transform_publisher" name="servo_to_velodyne"
@@ -88,7 +88,7 @@
 
 
   <node
-    pkg="spin_hokuyo"
+    pkg="scan_to_pcl"
     type="scan_to_pcl"
     name="scan_to_pcl"
    />
@@ -107,22 +107,22 @@
  
     <node type="point_cloud2_assembler" pkg="laser_assembler"
         name="my_assembler">
-    <remap from="cloud" to="/hokuyo_points"/>
+    <remap from="cloud" to="velodyne_points"/>
     <param name="max_clouds" type="int" value="10000" />
     <param name="fixed_frame" type="string" value="map" />
   </node>
 
 
    <node
-     pkg="spin_hokuyo"
-     type="pcl_assembler_client"
-     name="pcl_assembler_client"
+     pkg="tilting_lidar_clean"
+     type="combine_clouds"
+     name="combine_clouds"
      output="screen"
     />
 
  
     <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
-         <param name="resolution" value="0.1" />
+         <param name="resolution" value="0.3" />
          <param name="frame_id" type="string" value="map" />
          <param name="sensor_model/max_range" value="300.0" />
          <remap from="cloud_in" to="/assembled_cloud" />
