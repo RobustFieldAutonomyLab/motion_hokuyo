@@ -34,7 +34,6 @@ vector<float> holder;
 bool present;
 int p;
 ros::Publisher pub_1;
-ros::Publisher pub_2;
 int runs = -1;
 int tolerance = 0;
 float ratioThresh = 0.5;
@@ -144,6 +143,7 @@ void publisher()
 {
     filterNoise();
     filterUnobserved();
+
     std_msgs::Float32MultiArray array;
     array.data.clear();
     int count;
@@ -154,18 +154,20 @@ void publisher()
        array.data.push_back(motionPoints[i]);
     }
 
+    int holder = (count - 1) / offset;
+
+    array.data.push_back(holder);
+
     for(i = 1; i <= points; i++)
     {
        p = p + offset;
     }
 
-    ROS_INFO_STREAM(count);
+  //  ROS_INFO_STREAM(holder);
+  //  ROS_WARN_STREAM(runs);
 
     pub_1.publish(array);
-
-    std_msgs::Float64 total;
-    total.data = (count - 1) / offset;
-    pub_2.publish(total);
+    ros::Duration(1).sleep();
 }
 
 void writeSpot()
@@ -265,7 +267,6 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::Subscriber sub=nh.subscribe("/octomap_full", 1, &test);
     pub_1=nh.advertise<std_msgs::Float32MultiArray>("filtered_octo", 1);
-    pub_2=nh.advertise<std_msgs::Float64>("motion_points", 1);
     motionPoints.push_back(0);
     ros::spin();
     return 0;

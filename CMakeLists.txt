@@ -48,11 +48,14 @@ target_link_libraries(hokuyo_ground_filter ${PCL_LIBRARIES})
 add_executable(motion_detector motion_detector_octomap.cpp)
 target_link_libraries(motion_detector ${catkin_LIBRARIES})
 
+add_executable(objectID object_detector.cpp)
+target_link_libraries(objectID ${catkin_LIBRARIES})
+
 add_executable(marker_array_pub marker_array_pub.cpp)
 target_link_libraries(marker_array_pub ${catkin_LIBRARIES})
 
+add_executable(marker_array_pub_objects marker_array_pub_objects.cpp)
+target_link_libraries(marker_array_pub_objects ${catkin_LIBRARIES})
+
 add_executable(plane_extract_ransac plane_extract_ransac.cpp)
 target_link_libraries(plane_extract_ransac ${catkin_LIBRARIES})
-
-#add_executable(object_detector_test object_detector_test.cpp)
-#target_link_libraries(object_detector_test ${catkin_LIBRARIES})

@@ -65,7 +65,6 @@ void filterGround (const sensor_msgs::PointCloud2ConstPtr& msg)
     pcl::toROSMsg(aux, filtered);
     pub.publish(filtered);
     ROS_INFO_STREAM("Removed Floor");
-    z_obtained = 0;
 
     aux.clear();
     cloud.clear();

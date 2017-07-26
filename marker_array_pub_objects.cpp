@@ -15,23 +15,6 @@ using namespace std;
 ros::Publisher ma_pub;
 
 vector<float> points;
-int last_size = 0;
-
-void clear_markers(){
-  visualization_msgs::Marker marker;
-  visualization_msgs::MarkerArray markerArray;
-
-  for(int i=1; i<=10000; i++){
-  marker.header.frame_id = "/map";
-  marker.header.stamp = ros::Time::now();
-  marker.ns = "motion_array";
-    marker.id = i;
-    marker.type = 1;
-    marker.action = visualization_msgs::Marker::DELETE;
-  }
-  markerArray.markers.push_back(marker);
-  ma_pub.publish(markerArray);
-}
 
 void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 	visualization_msgs::Marker marker;
@@ -45,28 +28,15 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 		t++;
 	}
 
-<<<<<<< HEAD
-  if(last_size == 0){
-    last_size = msg->data.size();
-  }
-
-	for(int i=1; i<=last_size; i+=6) {
-=======
 	ROS_INFO_STREAM("Finished for loop one");
 	//markerArray.action = 3;
 	for(int i=1; i<=msg->data.size(); i+=6) {
->>>>>>> e054b8766d541020672e06d49739291ffbd7c761
 		marker.header.frame_id = "/map";
 		marker.header.stamp = ros::Time::now();
 		marker.ns = "motion_array";
     	marker.id = i;
     	marker.type = 1;
-      if (i > msg->data.size()){
-        marker.action = visualization_msgs::Marker::DELETE;        
-      }
-      else{
-    	  marker.action = visualization_msgs::Marker::ADD;
-      }
+    	marker.action = visualization_msgs::Marker::ADD;
 
     	//double scale = octomap::OcTreeBaseImpl->getResolution();
     	double scale = 0.3;
@@ -84,21 +54,18 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
     	marker.color.a = 1.0;
     	marker.lifetime = ros::Duration();
 
-    	//ROS_WARN_STREAM(msg->data.size());
+    	ROS_WARN_STREAM(msg->data.size());
 
 		markerArray.markers.push_back(marker);    	
 	}
-	//ROS_INFO_STREAM("Publish");
+	ROS_INFO_STREAM("Publish");
 	ma_pub.publish(markerArray);
-
-  last_size = msg->data.size();
-
 }
 
 int main(int argc, char **argv ) {
   	ros::init(argc, argv, "marker_array_pub");
   	ros::NodeHandle n;
-  	ros::Subscriber array_sub = n.subscribe("/filterd_octo", 1, markerPublisher);
-  	ma_pub = n.advertise<visualization_msgs::MarkerArray>("filtered_octo_marker", 1);
+  	ros::Subscriber array_sub = n.subscribe("/objects", 1, markerPublisher);
+  	ma_pub = n.advertise<visualization_msgs::MarkerArray>("objects_marker", 1);
   	ros::spin();
 }
