@@ -154,18 +154,23 @@ void publisher()
        array.data.push_back(motionPoints[i]);
     }
 
+    int holder = (count - 1) / offset;
+
+    array.data.push_back(holder);
+
     for(i = 1; i <= points; i++)
     {
        p = p + offset;
     }
 
-    ROS_INFO_STREAM(count);
+    ROS_INFO_STREAM(holder);
+    ROS_WARN_STREAM(runs);
 
+   /* std_msgs::Float64 total;
+    total.data = (count - 2) / offset;
+
+    pub_2.publish(total);*/
     pub_1.publish(array);
-
-    std_msgs::Float64 total;
-    total.data = (count - 1) / offset;
-    pub_2.publish(total);
 }
 
 void writeSpot()

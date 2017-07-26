@@ -11,21 +11,125 @@ vector<float> masterList;
 vector<vector<float>> object;
 int n = 0;
 bool go;
-float threshold = 0.03;
+float threshold = 0.5;
 int obtain = 0;
-int total;
+float total;
 int offset = 6;
 int qualifier = 10;
+int initialize = 0;
+float near = 0.05;
+int measure = 0;
+
+void redo(int k, int jump, int miner, int maxer)
+{
+    int p = 7;
+    float max = object[k][p+jump];
+    float min = object[k][p+jump];
+
+    for(p = 13; p <= object[k][0] * offset + 7; p+=offset)
+    {
+        if(min > object[k][p+jump])
+        {
+           min = object[k][p+jump];
+        }
+
+        if(max < object[k][p+jump])
+        {
+           max = object[k][p+jump];
+        }
+    }
+
+    object[k][miner] = min;
+    object[k][maxer] = max;
+}
 
 void removeMaster(int point)
 {
-    masterList.erase(masterList.begin()+point-1, masterList.begin()+point+5);
+    masterList.erase(masterList.begin()+point, masterList.begin()+point+6);
     total--;
 }
 
-void removeObject()
+void removeObject(int k)
 {
-    object.erase(object.begin()+n);
+    object.erase(object.begin()+k);
+    n--;
+}
+
+void removeFromObject(int point, int k)
+{
+    int x = object[k][point+1];
+    int y = object[k][point+2];
+    int z = object[k][point+3];
+
+    object[k].erase(object[k].begin()+point-1, object[k].begin()+point+5);
+    object[k][0]--;
+
+    if(object[k][0] == 0)
+    {
+       removeObject(k);
+    }
+
+    else
+    {
+       if(x == object[k][1] || x == object[k][2])
+       {
+          redo(k, 1, 1, 2);
+       }
+
+       if(y == object[k][3] || y == object[k][4])
+       {
+          redo(k, 2, 3, 4);
+       }
+
+       if(z == object[k][5] || z == object[k][6])
+       {
+          redo(k, 3, 5, 6);
+       }
+    }
+}
+
+void addToObject(int p)
+{
+    int temp = p;
+
+    for(int i = temp; i < temp+6; i++)
+    {
+       object[n].push_back(masterList[i]);
+    } 
+
+    object[n][0]++;
+
+    if(object[n][1] > masterList[p+1])
+    {
+       object[n][1] = masterList[p+1];
+    }
+
+    if(object[n][2] < masterList[p+1])
+    {
+       object[n][2] = masterList[p+1];
+    }
+
+    if(object[n][3] > masterList[p+2])
+    {
+       object[n][3] = masterList[p+2];
+    }
+
+    if(object[n][4] < masterList[p+2])
+    {
+       object[n][4] = masterList[p+2];
+    }
+
+    if(object[n][5] > masterList[p+3])
+    {
+       object[n][5] = masterList[p+3];
+    }
+
+    if(object[n][6] < masterList[p+3])
+    {
+       object[n][6] = masterList[p+3];
+    }
+
+    removeMaster(p);
 }
 
 void pickFirstPoint()
@@ -52,8 +156,9 @@ bool findNeighbors(int home)
 {
     int good = 0;
     int hold = total;
+    int p = 1;
 
-    for(int p = 1; p <= hold*offset; p+offset)
+    for(int i = 1; i <= hold; i++)
     {
         float test = sqrt(pow((object[n][home+1] - masterList[p+1]), 2) +
                           pow((object[n][home+2] - masterList[p+2]), 2) +
@@ -61,50 +166,108 @@ bool findNeighbors(int home)
 
         if(test <= threshold)
         {
-           for(int i = p; i < p+7; i++)
-           {
-              object[n].push_back(masterList[i]);
-              object[n][0]++;
-           }
+           addToObject(p);
 
-           removeMaster(p);
            good = 1;
+        }
+
+        else
+        {
+           p = p + offset;
         }
     }
 
     if(good == 0)
     {
-       return true;
+       return false;
     }
 
     else
     {
-       return false;
+       return true;
     }
 }
 
-void obtainData(const std_msgs::Float64 &msg)
+void examineObjects()
 {
-ROS_WARN_STREAM("total");
-    total = msg.data;
-    obtain = 1;
+    for(int k = 1; k <= n; k++)
+    {
+        int hold = total;
+        int p = 1;
+
+        for(int j = 2; j <= object[k][0]; j++)
+        {
+            findNeighbors(j * offset + 1);
+        }
+    }
+}
+
+void deadPoints()
+{
+    int objects = n;
+    int ob = 1;
+
+    for(int k = 1; k <= objects; k++)
+    {
+        int remember = n;
+        int space = object[ob][0];
+        int spot = 7;
+
+        for(int j = 1; j <= space; j++)
+        {
+           bool match = false;
+           int p = 1;
+           int hold = total;
+
+           for(int i = 1; i <= hold; i++)
+           {
+               if(masterList[p+1] == object[ob][spot+1] &&
+                  masterList[p+2] == object[ob][spot+2] &&
+                  masterList[p+3] == object[ob][spot+3])
+               {
+                   removeMaster(p);
+                   match = true;
+               }
+
+               else
+               {
+                   p = p + offset;
+               }
+           }
+
+           if(match == false)
+           {
+               removeFromObject(spot, ob);
+           }
+
+           else
+           {
+               spot = spot + offset;
+           }
+        }
+
+        if(n == remember)
+        {
+           ob++;
+        }
+    }
 }
 
 void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
 {
-ROS_INFO_STREAM("vector");
     masterList.clear();
     for (std::vector<float>::const_iterator it = msg->data.begin(); it != msg->data.end(); ++it)
     {
         masterList.push_back(*it);
     }
 
-    while(obtain == 0)
-    {
-       ros::spinOnce();
-    }
+    total = masterList.back();
 
-    obtain = 0;
+    if(n!=0)
+    {
+       deadPoints();
+       examineObjects();
+    }
 
     while(total != 0)
     {
@@ -113,18 +276,20 @@ ROS_INFO_STREAM("vector");
 
        if(go == false)
        {
-           removeObject();
-           return;
+           removeObject(n);
        }
 
-       for(int i = 2; i <= object[n][0]; i++)
+       else
        {
-           findNeighbors(i * offset + 1);
-       }
+          for(int i = 2; i <= object[n][0]; i++)
+          {
+              findNeighbors(i * offset + 1);
+          }
 
-       if(object[n][0] <= qualifier)
-       {
-           removeObject();
+          if(object[n][0] <= qualifier)
+          {
+              removeObject(n);
+          }
        }
     }
 
@@ -137,7 +302,6 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "object_detector");
     ros::NodeHandle nh;
     ros::Subscriber sub_1=nh.subscribe("/filtered_octo", 1, &objectID);
-    ros::Subscriber sub_2=nh.subscribe("/motion_points", 1, &obtainData);
     object.push_back(vector<float>()); //occupies object[0]
     ros::spin();
     return 0;
