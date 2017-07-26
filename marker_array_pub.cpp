@@ -45,17 +45,17 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 		t++;
 	}
 
-<<<<<<< HEAD
+
   if(last_size == 0){
     last_size = msg->data.size();
   }
 
 	for(int i=1; i<=last_size; i+=6) {
-=======
+
 	ROS_INFO_STREAM("Finished for loop one");
 	//markerArray.action = 3;
 	for(int i=1; i<=msg->data.size(); i+=6) {
->>>>>>> e054b8766d541020672e06d49739291ffbd7c761
+
 		marker.header.frame_id = "/map";
 		marker.header.stamp = ros::Time::now();
 		marker.ns = "motion_array";
