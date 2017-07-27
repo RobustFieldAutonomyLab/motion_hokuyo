@@ -48,6 +48,9 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
   if(last_size == 0){
     last_size = msg->data.size();
   }
+  else if(last_size < msg->data.size()){
+    last_size = msg->data.size();
+  }
 
 	//markerArray.action = 3;
 	for(int i=1; i<=last_size; i+=6) {
