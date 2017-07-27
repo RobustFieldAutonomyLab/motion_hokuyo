@@ -15,6 +15,8 @@ vector<vector<float> > tempPoints;
 vector<vector<float> > importList;
 ros::Publisher ma_pub;
 float bound = 1;
+int old_marker_id = 0;
+int min_points_in_bound = 3;
 
 template <typename T>
     bool IsInBounds(const T& value, const T& low, const T& high) {
@@ -24,7 +26,8 @@ template <typename T>
 void pointBounder() {  //DEPRECATED Main code transferred to nearest neighbor function
 
 	//vector< vector<float> > tempPoints;
-	for(int j = 0; j < importList.size(); j++){  //Add all points inside the bounding box to tempPoints
+	for(int j = 0; j < importList.size(); j++){  	//Set a bounding box using global variable bound on all points in importList with reference to the first point in importList vector
+													//Send all points inside bounding box, including the first reference point, to tempPoints
 		if ((IsInBounds(importList[0][0], importList[j][0]-bound, importList[j][0]+bound) && (IsInBounds(importList[0][1], importList[j][1]-bound, importList[j][1]+bound) && (IsInBounds(importList[0][2], importList[j][2]-bound, importList[j][2]+bound))))){
 			tempPoints.push_back(importList[j]);
 		}
@@ -32,20 +35,19 @@ void pointBounder() {  //DEPRECATED Main code transferred to nearest neighbor fu
 
 	/*int i = 0;
 	for(int i; i < tempPoints.size(); i++){
-		string  s = to_string(tempPoints[i][0]) + "," + to_string(tempPoints[i][1]) + "," + to_string(tempPoints[i][2]);
+		string  s = to_string(tempPoints[i][3]);// + "," + to_string(tempPoints[i][1]) + "," + to_string(tempPoints[i][2]);
 		ROS_INFO_STREAM(s);
-	}*/
-	return; //tempPoints;
+	}
+	return;*/ //tempPoints;
 }
 
 void nearestNeighbor(int start_point){ //Should be split to allow for more modularity
 
 	vector< vector<float> > tempObject; //initialize object to be added to objects vector
-	if(tempPoints.size() > 1){
+	if(tempPoints.size() >= min_points_in_bound){  //Only begin adding to object if there are a certain number of points in bounds
 		tempObject.push_back(tempPoints[0]);  //Add first point of tempPoints to tempObject
 		tempPoints.erase (tempPoints.begin());
 		int i = 0;
-		ROS_ERROR_STREAM(tempPoints.size());
 		while(ros::ok()){ //Object creation while loop
 			float min_dist = (2*bound); //minimum distance initialized as bounding box size
 			int min_location;
@@ -57,7 +59,6 @@ void nearestNeighbor(int start_point){ //Should be split to allow for more modul
 					//min_dist = distance; //REMOVE? deprecated?
 					min_location = j; //set min location to be the current index value of the vector if distance value is smallest
 					min_dist = distance;
-					//ROS_ERROR_STREAM(min_dist);
 				}
 			}
 			if (min_dist == 2*bound){ //if min distance is still initialized value then break because no nearest neighbors within threshold
@@ -65,21 +66,20 @@ void nearestNeighbor(int start_point){ //Should be split to allow for more modul
 				break;
 			}
 			else{
-				ROS_INFO_STREAM(tempPoints.size());
 				tempObject.push_back(tempPoints[min_location]); //Add lowest distance point to tempObject
 				tempPoints.erase(tempPoints.begin()+min_location); //Erase this point from tempPoints
+				for(int k = 0; k < importList.size(); k++){
+					if(importList[k][3] == tempPoints[min_location][3]){
+						importList.erase(importList.begin()+k);
+					}
+				}
 			}
-			++i;
-			//ROS_WARN_STREAM(tempObject.size());
-			//ROS_ERROR_STREAM(tempPoints.size());
+			++i; //Increment the tempObject point being used for nearest neighbor calculations, as we want to use the most recent tempObject point
 		}
 	}
 	else{ //If no points are detected dont add the single point as an object and erase the point
-		//tempObject.push_back(tempPoints[0]);
-		tempPoints.erase(tempPoints.begin());
-		//ROS_ERROR_STREAM("else pushback");
+		importList.erase(importList.begin());
 	}
-	//ROS_WARN_STREAM(tempObject.size());
 	for(int i = 0; i < tempObject.size(); i++){ //Output all tempObject points to console 
 			string  s = to_string(tempObject[i][0]) + "," + to_string(tempObject[i][1]) + "," + to_string(tempObject[i][2]);
 			//ROS_WARN_STREAM(s);
@@ -90,23 +90,35 @@ void nearestNeighbor(int start_point){ //Should be split to allow for more modul
 void markerPublisher() {
 	visualization_msgs::Marker marker;
 	visualization_msgs::MarkerArray markerArray;
+	int marker_id = 0;
 
 	//ROS_INFO_STREAM(objects.size());
+
+	/*if(old_marker_id < msg->data.size()){
+    	old_marker_id = msg->data.size();
+  	}*/
+
+  	for(int i=0; i<old_marker_id; i++){
+		marker.ns = "object_array";
+		marker.id = i;
+		marker.action = visualization_msgs::Marker::DELETE;
+		markerArray.markers.push_back(marker);
+  	}
+  	ma_pub.publish(markerArray);
+
+	markerArray.markers.clear();
 
 	//markerArray.action = 3;
 	for(int i=0; i<objects.size(); i++){
 		//ROS_WARN_STREAM(objects[i].size());
 		for(int j=0; j<objects[i].size(); j++) {
-
-
-
 			marker.header.frame_id = "/map";
 			marker.header.stamp = ros::Time::now();
-			marker.ns = "motion_array";
-    		marker.id = j;
+			marker.ns = "object_array";
+    		marker.id = marker_id;
     		marker.type = 1;
     		//marker.action = visualization_msgs::Marker::DELETEALL;
-    		marker.action = visualization_msgs::Marker::ADD;
+   			marker.action = visualization_msgs::Marker::ADD;
 
     		//double scale = octomap::OcTreeBaseImpl->getResolution();
     		double scale = 0.3;
@@ -122,24 +134,31 @@ void markerPublisher() {
     		marker.color.g = 0.0f;
     		marker.color.b = 1.0f;
     		marker.color.a = 1.0;
-    		marker.lifetime = ros::Duration(0);
+    		marker.lifetime = ros::Duration();
 
     		//ROS_WARN_STREAM(msg->data.size());
 
-			markerArray.markers.push_back(marker);    	
+			markerArray.markers.push_back(marker);
+			marker_id++; 	
 		}
 	}
+	old_marker_id = marker_id;
+
+	ROS_ERROR_STREAM(markerArray.markers.size());
+
 	//ROS_INFO_STREAM("Publish");
 	ma_pub.publish(markerArray);
-
+  
 	//objects.clear();
 	tempPoints.clear();
 	importList.clear();
+	objects.clear();
 }
 
 void arrayCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 	int first = 1;
 	int start_point = 0; //Sets index point 0 as the first point to check in the vector
+	int points_index = 0;
 	for (std::vector<float>::const_iterator it = msg->data.begin(); it < msg->data.end(); it+=3){
 		//std::vector<float>::const_iterator it = msg->data.begin();
 		if(first == 1){
@@ -152,14 +171,16 @@ void arrayCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 			node.push_back(*it);
 			//ROS_ERROR_STREAM(*it);
 		}
-		//node.push_back(0); //REMOVE? Adds deprecated extra slot in vector for distance measurement
+		node.push_back(points_index); //Slot in vector for point index value
+		++points_index;
 		importList.push_back(node);
 	}
 	//ROS_WARN_STREAM("Entering nearestNeighbor func");
 	//while((tempPoints.size() != 0)&&(ros::ok())){
+	while(importList.size() > 1){
 		pointBounder();
 		nearestNeighbor(start_point);
-	//}
+	}
 
 	markerPublisher();
 	return;
