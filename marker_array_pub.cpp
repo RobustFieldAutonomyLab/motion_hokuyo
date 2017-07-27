@@ -17,7 +17,7 @@ ros::Publisher ma_pub;
 vector<float> points;
 int last_size = 0;
 
-void clear_markers(){
+/*void clear_markers(){
   visualization_msgs::Marker marker;
   visualization_msgs::MarkerArray markerArray;
 
@@ -31,7 +31,7 @@ void clear_markers(){
   }
   markerArray.markers.push_back(marker);
   ma_pub.publish(markerArray);
-}
+}*/
 
 void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 	visualization_msgs::Marker marker;
@@ -45,16 +45,12 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 		t++;
 	}
 
-
   if(last_size == 0){
     last_size = msg->data.size();
   }
 
-	for(int i=1; i<=last_size; i+=6) {
-
-	ROS_INFO_STREAM("Finished for loop one");
 	//markerArray.action = 3;
-	for(int i=1; i<=msg->data.size(); i+=6) {
+	for(int i=1; i<=last_size; i+=6) {
 
 		marker.header.frame_id = "/map";
 		marker.header.stamp = ros::Time::now();
@@ -98,7 +94,7 @@ void markerPublisher(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 int main(int argc, char **argv ) {
   	ros::init(argc, argv, "marker_array_pub");
   	ros::NodeHandle n;
-  	ros::Subscriber array_sub = n.subscribe("/filterd_octo", 1, markerPublisher);
+  	ros::Subscriber array_sub = n.subscribe("/filtered_octo", 1, markerPublisher);
   	ma_pub = n.advertise<visualization_msgs::MarkerArray>("filtered_octo_marker", 1);
   	ros::spin();
 }
