@@ -7,6 +7,8 @@
 #include <std_msgs/MultiArrayDimension.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h> 
 
 using namespace std;
 
@@ -14,9 +16,10 @@ vector<vector<vector<float> > > objects;
 vector<vector<float> > tempPoints;
 vector<vector<float> > importList;
 ros::Publisher ma_pub;
-float bound = 1;
+float boundingBox = 5;
+float bound = 0.4;
 int old_marker_id = 0;
-int min_points_in_bound = 3;
+int min_points_in_bound = 12;
 
 template <typename T>
     bool IsInBounds(const T& value, const T& low, const T& high) {
@@ -28,7 +31,7 @@ void pointBounder() {  //DEPRECATED Main code transferred to nearest neighbor fu
 	//vector< vector<float> > tempPoints;
 	for(int j = 0; j < importList.size(); j++){  	//Set a bounding box using global variable bound on all points in importList with reference to the first point in importList vector
 													//Send all points inside bounding box, including the first reference point, to tempPoints
-		if ((IsInBounds(importList[0][0], importList[j][0]-bound, importList[j][0]+bound) && (IsInBounds(importList[0][1], importList[j][1]-bound, importList[j][1]+bound) && (IsInBounds(importList[0][2], importList[j][2]-bound, importList[j][2]+bound))))){
+		if ((IsInBounds(importList[0][0], importList[j][0]-boundingBox, importList[j][0]+boundingBox) && (IsInBounds(importList[0][1], importList[j][1]-boundingBox, importList[j][1]+boundingBox) && (IsInBounds(importList[0][2], importList[j][2]-boundingBox, importList[j][2]+boundingBox))))){
 			tempPoints.push_back(importList[j]);
 		}
 	}
@@ -41,7 +44,7 @@ void pointBounder() {  //DEPRECATED Main code transferred to nearest neighbor fu
 	return;*/ //tempPoints;
 }
 
-void nearestNeighbor(int start_point){ //Should be split to allow for more modularity
+void nearestNeighbor(){ //Should be split to allow for more modularity
 
 	vector< vector<float> > tempObject; //initialize object to be added to objects vector
 	if(tempPoints.size() >= min_points_in_bound){  //Only begin adding to object if there are a certain number of points in bounds
@@ -63,6 +66,7 @@ void nearestNeighbor(int start_point){ //Should be split to allow for more modul
 			}
 			if (min_dist == 2*bound){ //if min distance is still initialized value then break because no nearest neighbors within threshold
 				//tempObject.clear();
+
 				break;
 			}
 			else{
@@ -73,6 +77,7 @@ void nearestNeighbor(int start_point){ //Should be split to allow for more modul
 						importList.erase(importList.begin()+k);
 					}
 				}
+			//ros::Duration(0.01).sleep();
 			}
 			++i; //Increment the tempObject point being used for nearest neighbor calculations, as we want to use the most recent tempObject point
 		}
@@ -80,10 +85,11 @@ void nearestNeighbor(int start_point){ //Should be split to allow for more modul
 	else{ //If no points are detected dont add the single point as an object and erase the point
 		importList.erase(importList.begin());
 	}
-	for(int i = 0; i < tempObject.size(); i++){ //Output all tempObject points to console 
+	/*for(int i = 0; i < tempObject.size(); i++){ //Output all tempObject points to console 
 			string  s = to_string(tempObject[i][0]) + "," + to_string(tempObject[i][1]) + "," + to_string(tempObject[i][2]);
 			//ROS_WARN_STREAM(s);
 		}
+	*/
 	objects.push_back(tempObject); //Add temporary object (vector of points) to objects vector (vector of objects)
 }
 
@@ -111,6 +117,10 @@ void markerPublisher() {
 	//markerArray.action = 3;
 	for(int i=0; i<objects.size(); i++){
 		//ROS_WARN_STREAM(objects[i].size());
+		double r = (rand() % 10)/10.0;
+		double g = (rand() % 10)/10.0;
+		double b = (rand() % 10)/10.0;
+		
 		for(int j=0; j<objects[i].size(); j++) {
 			marker.header.frame_id = "/map";
 			marker.header.stamp = ros::Time::now();
@@ -130,9 +140,9 @@ void markerPublisher() {
     		marker.pose.position.y = objects[i][j][1];
     		marker.pose.position.z = objects[i][j][2];
 
-    		marker.color.r = 0.0f;
-    		marker.color.g = 0.0f;
-    		marker.color.b = 1.0f;
+    		marker.color.r = (r);
+    		marker.color.g = (g);
+    		marker.color.b = (b);
     		marker.color.a = 1.0;
     		marker.lifetime = ros::Duration();
 
@@ -144,9 +154,8 @@ void markerPublisher() {
 	}
 	old_marker_id = marker_id;
 
-	ROS_ERROR_STREAM(markerArray.markers.size());
+	//ROS_ERROR_STREAM(objects.size());//markerArray.markers.size());
 
-	//ROS_INFO_STREAM("Publish");
 	ma_pub.publish(markerArray);
   
 	//objects.clear();
@@ -156,12 +165,10 @@ void markerPublisher() {
 }
 
 void arrayCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
-	int first = 1;
-	int start_point = 0; //Sets index point 0 as the first point to check in the vector
-	int points_index = 0;
+	bool first = 1; //Value that keeps track of the first run of the for loop
+	int points_index = 0; //Value that indexes each of the points to keep consistency between importPoints and tempPoints
 	for (std::vector<float>::const_iterator it = msg->data.begin(); it < msg->data.end(); it+=3){
-		//std::vector<float>::const_iterator it = msg->data.begin();
-		if(first == 1){
+		if(first == 1){ //Check for first loop
 			++it;	
 			first = 0;
 		}
@@ -177,9 +184,10 @@ void arrayCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
 	}
 	//ROS_WARN_STREAM("Entering nearestNeighbor func");
 	//while((tempPoints.size() != 0)&&(ros::ok())){
-	while(importList.size() > 1){
+	while(importList.size() > 1 && ros::ok()){
 		pointBounder();
-		nearestNeighbor(start_point);
+		nearestNeighbor();
+		tempPoints.clear();
 	}
 
 	markerPublisher();
@@ -191,5 +199,6 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh;
     ros::Subscriber sub=nh.subscribe("/filtered_octo", 1, &arrayCallback);
     ma_pub = nh.advertise<visualization_msgs::MarkerArray>("object_marker", 1);
+    srand (time(0));
     ros::spin();
 }
