@@ -12,6 +12,10 @@
 #include <std_msgs/MultiArrayDimension.h>
 #include <octomap/OcTreeBaseImpl.h>
 #include <std_msgs/Float64.h>
+#include <stdlib.h>
+#include <time.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 using namespace std;
 octomap::OcTreeNode* oldNode;
@@ -34,9 +38,13 @@ vector<float> holder;
 bool present;
 int p;
 ros::Publisher pub_1;
+ros::Publisher pub_2;
 int runs = -1;
-int tolerance = 0;
-float ratioThresh = 0.5;
+float ratioThresh = 0.75; //percent non-dynamic for deletion
+float obsThresh = 0.66; //percent unobserved for deletion
+int old_marker_id = 0;
+
+//look into priority observation
 
 //Determine if point is on list
 bool searchList()
@@ -90,7 +98,7 @@ void deleteSpot()
     points--;
 }
 
-//using a 66% non-dynamic filter
+//using a ratioThresh% non-dynamic filter
 void filterNoise()
 {
     p = 1;
@@ -102,6 +110,7 @@ void filterNoise()
 
        if(ratio >= ratioThresh)
        {
+ROS_ERROR_STREAM("thresh");
           holder = motionPoints;
           deleteSpot();
           correction();
@@ -114,6 +123,7 @@ void filterNoise()
     }
 }
 
+//remove points not observed for obsThres% of runs
 void filterUnobserved()
 {
     int hold = points;
@@ -124,7 +134,7 @@ void filterUnobserved()
        int observed = runs - motionPoints[p] + 1;
        float seen = (abs(motionPoints[p+5]) + motionPoints[p+4])/observed;
 
-       if(seen < 0.66)
+       if(seen < obsThresh)
        {
           holder = motionPoints;
           deleteSpot();
@@ -136,6 +146,65 @@ void filterUnobserved()
           p = p + offset;
        }
      }    
+}
+
+void visualPublisher()
+{
+visualization_msgs::Marker marker;
+    visualization_msgs::MarkerArray markerArray;
+    int marker_id = 0;
+    int p = 7;
+
+    for(int i = 0; i < old_marker_id; i++)
+    {
+        marker.ns = "motion_array";
+        marker.id = i;
+        marker.action = visualization_msgs::Marker::DELETE;
+        markerArray.markers.push_back(marker);
+    }
+
+    pub_2.publish(markerArray);
+
+        double r = (rand() % 10)/10.0;
+        double g = (rand() % 10)/10.0;
+        double b = (rand() % 10)/10.0;
+
+        for(int temp = 1; temp <= points; temp++)
+        {
+             marker.header.frame_id = "/base_link";
+             marker.header.stamp = ros::Time::now();
+             marker.ns = "motion_array";
+
+             marker.id = marker_id;
+             marker.type = 1;
+
+             marker.action = visualization_msgs::Marker::ADD;
+
+             double scale = 0.3;
+ 
+             marker.scale.x = scale;
+             marker.scale.y = scale;
+             marker.scale.z = scale;
+
+             marker.pose.position.x = motionPoints[p+1];
+    	     marker.pose.position.y = motionPoints[p+2];
+    	     marker.pose.position.z = motionPoints[p+3];
+
+    	     marker.color.r = (r);
+    	     marker.color.g = (g);
+    	     marker.color.b = (b);
+    	     marker.color.a = 1.0; 
+             marker.lifetime = ros::Duration();
+
+             markerArray.markers.push_back(marker);
+             marker_id++;
+
+             p = p + offset;
+        }
+
+    old_marker_id = marker_id;
+
+    pub_2.publish(markerArray);
 }
 
 //send out filtered list
@@ -163,11 +232,12 @@ void publisher()
        p = p + offset;
     }
 
-  //  ROS_INFO_STREAM(holder);
+    ROS_INFO_STREAM(holder);
   //  ROS_WARN_STREAM(runs);
 
     pub_1.publish(array);
-    ros::Duration(1).sleep();
+visualPublisher();
+//    ros::Duration(1).sleep();
 }
 
 void writeSpot()
@@ -263,10 +333,11 @@ void test(const octomap_msgs::Octomap &msg)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "octomap_test");
+    ros::init(argc, argv, "motion_detector");
     ros::NodeHandle nh;
     ros::Subscriber sub=nh.subscribe("/octomap_full", 1, &test);
     pub_1=nh.advertise<std_msgs::Float32MultiArray>("filtered_octo", 1);
+    pub_2=nh.advertise<visualization_msgs::MarkerArray>("motion_array", 1);
     motionPoints.push_back(0);
     ros::spin();
     return 0;

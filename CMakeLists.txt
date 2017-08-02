@@ -34,9 +34,6 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories(${PCL_INCLUDE_DIRS})
 
-add_executable(octomap_test octomap_test.cpp)
-target_link_libraries(octomap_test ${catkin_LIBRARIES})
-
 add_executable(max_z max_z.cpp)
 target_link_libraries(max_z ${catkin_LIBRARIES})
 target_link_libraries(max_z ${PCL_LIBRARIES})

@@ -15,15 +15,14 @@ vector<float> masterList;
 vector<vector<float>> object;
 int n = 0;
 bool go;
-float threshold = 0.6;
-int obtain = 0;
+float threshold = 0.4;
 float total;
 int offset = 6;
-int qualifier = 2;
+int qualifier = 3;
 int initialize = 0;
 ros::Publisher pub_1;
 int old_marker_id = 0;
-float closenessThresh = 1;
+int testMinimum = 1;
 
 //adjusts min and max values for x, y, or z depending on input
 void redo(int k, int jump, int miner, int maxer)
@@ -109,6 +108,43 @@ void removeFromObject(int point, int k)
     }
 }
 
+
+void removeFromObject2(int point, int k)
+{
+//point => starting value of point data on list
+//k => object number
+
+    int x = object[k][point+1];
+    int y = object[k][point+2];
+    int z = object[k][point+3];
+
+    object[k].erase(object[k].begin()+point-1, object[k].begin()+point+5);
+    object[k][0]--;
+
+   /* if(object[k][0] == 0)
+    {
+       removeObject(k);
+    }
+
+    else
+    {
+       if(x == object[k][1] || x == object[k][2])
+       {
+          redo(k, 1, 1, 2);
+       }
+
+       if(y == object[k][3] || y == object[k][4])
+       {
+          redo(k, 2, 3, 4);
+       }
+
+       if(z == object[k][5] || z == object[k][6])
+       {
+          redo(k, 3, 5, 6);
+       }
+    }*/
+}
+
 //add new point to object, adjust max/min if needed, remove point from master list
 void addToObject(int p, int k)
 {
@@ -161,12 +197,12 @@ void pickFirstPoint()
     n++;
     object.push_back(vector<float>());//add new object
     object[n].push_back(1); //object[n][0]
-    object[n].push_back(masterList[1]); //object[n][1] min X
-    object[n].push_back(masterList[1]); //object[n][2] max x
-    object[n].push_back(masterList[2]); //object[n][3] min y
-    object[n].push_back(masterList[2]); //object[n][4] max y
-    object[n].push_back(masterList[3]); //object[n][5] min z
-    object[n].push_back(masterList[3]); //object[n][6] max z
+    object[n].push_back(masterList[2]); //object[n][1] min X
+    object[n].push_back(masterList[2]); //object[n][2] max x
+    object[n].push_back(masterList[3]); //object[n][3] min y
+    object[n].push_back(masterList[3]); //object[n][4] max y
+    object[n].push_back(masterList[4]); //object[n][5] min z
+    object[n].push_back(masterList[4]); //object[n][6] max z
 
     for(int i = 1; i < 7; i++)
     {
@@ -178,35 +214,82 @@ void pickFirstPoint()
 
 //see if any points on master list neighbor a point in the object
 //true = found neighbor(s); false = no neighbors
-bool findNeighbors(int home, int k)
+bool findNeighbors(int k, string type, int point)
 {
-//home => starting position of point data in object to be tested
 //k => object number examined
 
     int good = 0;
-    int hold = total;
-    int p = 1;
 
-    for(int i = 1; i <= hold; i++)
+    if(type == "normal")
     {
-        float test = sqrt(pow((object[k][home+1] - masterList[p+1]), 2) +
-                          pow((object[k][home+2] - masterList[p+2]), 2) +
-                          pow((object[k][home+3] - masterList[p+3]), 2));
+       int hold = total;
+       int p = 1;
+       float xMin = object[k][1] - threshold;
+       float xMax = object[k][2] + threshold;
+       float yMin = object[k][3] - threshold;
+       float yMax = object[k][4] + threshold;
+       float zMin = object[k][5] - threshold;
+       float zMax = object[k][6] + threshold;
 
-        if(test <= threshold)
-        {
-           addToObject(p, k);
+       for(int i = 1; i <= hold; i++)
+       {
+ 
+           if((masterList[p+1] > xMin && masterList[p+1] < xMax) &&
+              (masterList[p+2] > yMin && masterList[p+2] < yMax) &&
+              (masterList[p+3] > zMin && masterList[p+3] < zMax))
+           {
+              addToObject(p, k);
+              good = 1;
+           }
 
-           good = 1;
-        }
+           else
+           {
+              p = p + offset;
+           }
+       }
+    }
 
-        else
-        {
-           p = p + offset;
-        }
+    else
+    {
+       float xMin = object[k][point+1] - threshold;
+       float xMax = object[k][point+1] + threshold;
+       float yMin = object[k][point+2] - threshold;
+       float yMax = object[k][point+2] + threshold;
+       float zMin = object[k][point+3] - threshold;
+       float zMax = object[k][point+4] + threshold;
+
+       int hold = object[k][0];
+       int p = 7;
+
+       for(int i = 1; i <= hold; i++)
+       {
+ 
+     /*      if((masterList[p+1] > xMin && masterList[p+1] < xMax) &&
+              (masterList[p+2] > yMin && masterList[p+2] < yMax) &&
+              (masterList[p+3] > zMin && masterList[p+3] < zMax) &&
+              (p != point))
+           {
+              good = 1;
+           }
+
+           else
+           {
+              p = p + offset;
+           }*/
+       }
     }
 
     if(good == 0)
+    {
+       return false;
+    }
+
+    else if(type == "normal")
+    {
+       return true;
+    }
+
+    else if(type == "test" && good < testMinimum)
     {
        return false;
     }
@@ -222,29 +305,12 @@ void examineObjects()
 {
     for(int k = 1; k <= n; k++)
     {
-        int hold = total;
-        int p = 1;
+        go = true;
 
-        for(int j = 2; j <= object[k][0]; j++)
+        while(go == true)
         {
-            findNeighbors(j * offset + 1, k);
+            go = findNeighbors(k, "normal", 0);
         }
-    }
-
-    int hold = n;
-    int k = 1;
-
-    for(int i = 1; i <= hold; i++)
-    {
-       if(object[k][0] <= qualifier)
-       {
-          removeObject(k);
-       }
-
-       else
-       {
-          k++;
-       }
     }
 }
 
@@ -301,60 +367,36 @@ void deadPoints()
     }
 }
 
-void uniteObjects()
+void checkSpacing()
 {
-   // while(n != 1)
-   // {
-       int totalObjects = n;
-       int k_i = 1;
- 
-       for(int i = 1; i <= n; i++)
-       {
-          int currentTotal = n;
-          int k_j = 1;
-          bool match = false;
+    int totalObjects = n;
+    bool test;
 
-          for(int j = 1; j <= currentTotal; j++)
-          {
-              if((i != j) &&
-                 (abs(object[i][1] - object[k_j][1]) <= closenessThresh || abs(object[i][2] - object[k_j][2] <= closenessThresh)) &&
-                 (abs(object[i][3] - object[k_j][3]) <= closenessThresh || abs(object[i][4] - object[k_j][4] <= closenessThresh)) &&
-                 (abs(object[i][5] - object[k_j][5]) <= closenessThresh || abs(object[i][6] - object[k_j][6] <= closenessThresh)))
-              {
-                  for(int p = 7; p <= object[j][0]*offset; p++)
-                  {
-                      object[i].push_back(object[j][p]);
-                  }
+    for(int k = 1; k <= totalObjects; k++)
+    {
+        int totalPoints = object[k][0];
+        int p = 7;
 
-                  redo(i, 1, 1, 2);
-                  redo(i, 2, 3, 4);
-                  redo(i, 3, 5, 6);
+        for(int point = 1; point <= totalPoints; point++)
+        {
+             test = findNeighbors(k, "test", point);
 
-                  removeObject(j);
+           /*  if(test == false)
+             {
+                 removeFromObject2(p, k);
+             }
 
-                  match = true;
-              }
-
-              else
-              {
-                  k_j++;
-              }
-           }
-
-           k_i++;
-//for every object, check every other object except itself to see if min/max for xyz are too close, i too close, push_back values of larger k to smaller k, then redo xyz max/min and delete higher k
-       }
-    //}
+             else
+             {
+                 p = p + offset;
+             }*/
+        }
+    }
 }
 
 //publish object points to array for marker array visualization
 void visualPublisher()
 {
-    if (n != 0 && n != 1)
-    {
-       //uniteObjects();
-    }
-
     visualization_msgs::Marker marker;
     visualization_msgs::MarkerArray markerArray;
     int marker_id = 0;
@@ -375,8 +417,6 @@ void visualPublisher()
         double r = (rand() % 10)/10.0;
         double g = (rand() % 10)/10.0;
         double b = (rand() % 10)/10.0;
-
-        p = 7;
 
         for(int temp = 1; temp <= object[k][0]; temp++)
         {
@@ -416,6 +456,8 @@ void visualPublisher()
 
 ROS_WARN_STREAM(n);
 
+
+
     pub_1.publish(markerArray);
 }
 
@@ -433,13 +475,14 @@ void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
     if(n!=0)
     {
        deadPoints();
+       checkSpacing();
        examineObjects();
     }
 
     while(total != 0)
     {
        pickFirstPoint();
-       go = findNeighbors(7, n);
+       go = findNeighbors(n, "normal", 0);
 
        if(go == false)
        {
@@ -448,16 +491,17 @@ void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
 
        else
        {
-          for(int i = 2; i <= object[n][0]; i++)
+          go = true;
+
+          while(go == true)
           {
-              findNeighbors(i * offset + 1, n);
+              go = findNeighbors(n, "normal", 0);
           }
 
-          if(object[n][0] <= qualifier)
+          if(object[n][0] < qualifier)
           {
               removeObject(n);
           }
-
        }
     }
 
