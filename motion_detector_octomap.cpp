@@ -110,7 +110,6 @@ void filterNoise()
 
        if(ratio >= ratioThresh)
        {
-ROS_ERROR_STREAM("thresh");
           holder = motionPoints;
           deleteSpot();
           correction();
@@ -233,7 +232,6 @@ void publisher()
     }
 
     ROS_INFO_STREAM(holder);
-  //  ROS_WARN_STREAM(runs);
 
     pub_1.publish(array);
 visualPublisher();

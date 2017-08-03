@@ -23,7 +23,7 @@ int qualifier = 2;
 int initialize = 0;
 ros::Publisher pub_1;
 int old_marker_id = 0;
-float closenessThresh = 1;
+float closenessThresh = 0.5;
 
 //adjusts min and max values for x, y, or z depending on input
 void redo(int k, int jump, int miner, int maxer)
@@ -303,8 +303,6 @@ void deadPoints()
 
 void uniteObjects()
 {
-   // while(n != 1)
-   // {
        int totalObjects = n;
        int k_i = 1;
  
@@ -319,11 +317,13 @@ void uniteObjects()
               if((i != j) &&
                  (abs(object[i][1] - object[k_j][1]) <= closenessThresh || abs(object[i][2] - object[k_j][2] <= closenessThresh)) &&
                  (abs(object[i][3] - object[k_j][3]) <= closenessThresh || abs(object[i][4] - object[k_j][4] <= closenessThresh)) &&
-                 (abs(object[i][5] - object[k_j][5]) <= closenessThresh || abs(object[i][6] - object[k_j][6] <= closenessThresh)))
+                 (abs(object[i][5] - object[k_j][5]) <= closenessThresh || abs(object[i][6] - object[k_j][6] <= closenessThresh)) &&
+                 (n!=1))
               {
-                  for(int p = 7; p <= object[j][0]*offset; p++)
+
+                  for(int p = 7; p <= object[k_j][0]*offset; p++)
                   {
-                      object[i].push_back(object[j][p]);
+                      object[i].push_back(object[k_j][p]);
                   }
 
                   redo(i, 1, 1, 2);
@@ -339,20 +339,19 @@ void uniteObjects()
               {
                   k_j++;
               }
-           }
+          }
 
            k_i++;
 //for every object, check every other object except itself to see if min/max for xyz are too close, i too close, push_back values of larger k to smaller k, then redo xyz max/min and delete higher k
        }
-    //}
 }
 
 //publish object points to array for marker array visualization
 void visualPublisher()
 {
-    if (n != 0 && n != 1)
+    if (n > 1)
     {
-       //uniteObjects();
+       uniteObjects();
     }
 
     visualization_msgs::Marker marker;
@@ -413,8 +412,10 @@ void visualPublisher()
     }
 
     old_marker_id = marker_id;
-
+if(n!=1)
+{
 ROS_WARN_STREAM(n);
+}
 
     pub_1.publish(markerArray);
 }
