@@ -15,15 +15,15 @@ vector<float> masterList;
 vector<vector<float>> object;
 int n = 0;
 bool go;
-float threshold = 0.6;
+float threshold = 0.4;
 int obtain = 0;
 float total;
 int offset = 6;
-int qualifier = 2;
+int qualifier = 3;
 int initialize = 0;
 ros::Publisher pub_1;
 int old_marker_id = 0;
-float closenessThresh = 0.5;
+float closenessThresh = 1;
 
 //adjusts min and max values for x, y, or z depending on input
 void redo(int k, int jump, int miner, int maxer)
@@ -49,10 +49,6 @@ void redo(int k, int jump, int miner, int maxer)
            max = object[k][p+jump];
         }
     }
-
-    object[k][miner] = min;
-    object[k][maxer] = max;
-}
 
 //Take a point off the master lisst
 void removeMaster(int point)
@@ -420,6 +416,89 @@ ROS_WARN_STREAM(n);
     pub_1.publish(markerArray);
 }
 
+//publish object points to array for marker array visualization
+void visualPublisherBlocks()
+{
+    if (n > 1)
+    {
+       uniteObjects();
+    }
+
+    visualization_msgs::Marker marker;
+    visualization_msgs::MarkerArray markerArray;
+    int marker_id = 0;
+
+    for(int i = 0; i < old_marker_id; i++)
+    {
+        marker.ns = "object_array";
+        marker.id = i;
+        marker.action = visualization_msgs::Marker::DELETE;
+        markerArray.markers.push_back(marker);
+    }
+
+    pub_1.publish(markerArray);
+
+    for(int k = 1; k <= n; k++)
+    {
+        double r = (rand() % 10)/10.0;
+        double g = (rand() % 10)/10.0;
+        double b = (rand() % 10)/10.0;
+ROS_ERROR_STREAM(n);
+ROS_INFO_STREAM(object[k][1]);
+ROS_INFO_STREAM(object[k][2]);
+ROS_INFO_STREAM(object[k][3]);
+ROS_INFO_STREAM(object[k][4]);
+ROS_INFO_STREAM(object[k][5]);
+ROS_INFO_STREAM(object[k][6]);
+
+        for(float z = object[k][5]; z <= object[k][6]; z+=0.3)
+        {
+            for(float y = object[k][3]; y <= object[k][4]; y+=0.3)
+            {
+                for(float x = object[k][1]; x <= object[k][2]; x+=0.3)
+                {
+                    marker.header.frame_id = "/base_link";
+                    marker.header.stamp = ros::Time::now();
+                    marker.ns = "object_array";
+
+                    marker.id = marker_id;
+                    marker.type = 1;
+
+                    marker.action = visualization_msgs::Marker::ADD;
+
+                    double scale = 0.3;
+   
+                    marker.scale.x = scale;
+                    marker.scale.y = scale;
+                    marker.scale.z = scale;
+  
+                    marker.pose.position.x = x;
+    	            marker.pose.position.y = y;
+    	            marker.pose.position.z = z;
+
+       	            marker.color.r = (r);
+    	            marker.color.g = (g);
+    	            marker.color.b = (b);
+    	            marker.color.a = 1.0; 
+                    marker.lifetime = ros::Duration();
+
+                    markerArray.markers.push_back(marker);
+                    marker_id++;
+                }
+            }
+        }
+    }
+
+    old_marker_id = marker_id;
+
+if(n!=1)
+{
+ROS_WARN_STREAM(n);
+}
+
+    pub_1.publish(markerArray);
+}
+
 //take in new master list, convert to vector, remove duplicates, identicals, and those belonging to other objects and then create new objects, then publish
 void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
 {
@@ -462,7 +541,7 @@ void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
        }
     }
 
-    visualPublisher();
+    visualPublisherBlocks();
 }
 
 //main
