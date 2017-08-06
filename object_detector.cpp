@@ -49,7 +49,7 @@ void redo(int k, int jump, int miner, int maxer)
            max = object[k][p+jump];
         }
     }
-
+}
 //Take a point off the master lisst
 void removeMaster(int point)
 {
