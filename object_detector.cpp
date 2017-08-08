@@ -19,7 +19,7 @@ float threshold = 0.4;
 int obtain = 0;
 float total;
 int offset = 6;
-int qualifier = 3;
+int qualifier = 0;
 int initialize = 0;
 ros::Publisher pub_1;
 int old_marker_id = 0;
@@ -541,7 +541,7 @@ void objectID(const std_msgs::Float32MultiArray::ConstPtr& msg)
        }
     }
 
-    visualPublisherBlocks();
+    visualPublisher();//Blocks();
 }
 
 //main
