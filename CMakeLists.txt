@@ -56,20 +56,20 @@ target_link_libraries(hokuyo_ground_filter ${PCL_LIBRARIES})
 add_executable(motion_detector motion_detector_octomap.cpp)
 target_link_libraries(motion_detector ${catkin_LIBRARIES})
 
-add_executable(objectID object_detector.cpp)
-target_link_libraries(objectID ${catkin_LIBRARIES})
+#add_executable(objectID object_detector.cpp)
+#target_link_libraries(objectID ${catkin_LIBRARIES})
 
-add_executable(marker_array_pub marker_array_pub.cpp)
-target_link_libraries(marker_array_pub ${catkin_LIBRARIES})
+#add_executable(marker_array_pub marker_array_pub.cpp)
+#target_link_libraries(marker_array_pub ${catkin_LIBRARIES})
 
-add_executable(marker_array_pub_objects marker_array_pub_objects.cpp)
-target_link_libraries(marker_array_pub_objects ${catkin_LIBRARIES})
+#add_executable(marker_array_pub_objects marker_array_pub_objects.cpp)
+#target_link_libraries(marker_array_pub_objects ${catkin_LIBRARIES})
 
 add_executable(plane_extract_ransac plane_extract_ransac.cpp)
 target_link_libraries(plane_extract_ransac ${catkin_LIBRARIES})
 
-add_executable(object_detector_rewrite object_detector_rewrite.cpp)
-target_link_libraries(object_detector_rewrite ${catkin_LIBRARIES})
+add_executable(object_detector_v3 object_detector_v3.cpp)
+target_link_libraries(object_detector_v3 ${catkin_LIBRARIES})
 
-add_executable(motion_filter_rewrite motion_filter_rewrite.cpp)
-target_link_libraries(motion_filter_rewrite ${catkin_LIBRARIES})
+add_executable(motion_filter_v3 motion_filter_v3.cpp)
+target_link_libraries(motion_filter_v3 ${catkin_LIBRARIES})
