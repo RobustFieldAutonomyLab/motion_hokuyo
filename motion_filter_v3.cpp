@@ -1,10 +1,6 @@
 #include <ros/ros.h>
-#include <vector>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_types.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/conversions.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/point_cloud.h>
 #include <std_msgs/Float64.h>
@@ -13,11 +9,6 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl/filters/extract_indices.h>
-#include <pcl/pcl_base.h>
-#include <Eigen/Core>
-#include <Eigen/Eigenvalues>
-#include <Eigen/Geometry>
-
 
 using namespace std;
 
@@ -64,12 +55,12 @@ class cropBoxFilter{
             Eigen::Vector4f temp_points_min;
             Eigen::Vector4f temp_points_max;
 			//Order is min_x min_y min_z max_x max_y max_z
-			temp_points_min[0] = (temp_marker.pose.position.x - temp_marker.scale.x/2)-1;
-			temp_points_min[1] = (temp_marker.pose.position.y - temp_marker.scale.y/2)-1;
-			temp_points_min[2] = (temp_marker.pose.position.z - temp_marker.scale.z/2)-1;
-			temp_points_max[0] = (temp_marker.pose.position.x + temp_marker.scale.x/2)+1;
-			temp_points_max[1] = (temp_marker.pose.position.y + temp_marker.scale.y/2)+1;
-			temp_points_max[2] = (temp_marker.pose.position.z + temp_marker.scale.z/2)+1;
+			temp_points_min[0] = (temp_marker.pose.position.x - temp_marker.scale.x/2);
+			temp_points_min[1] = (temp_marker.pose.position.y - temp_marker.scale.y/2);
+			temp_points_min[2] = (temp_marker.pose.position.z - temp_marker.scale.z/2);
+			temp_points_max[0] = (temp_marker.pose.position.x + temp_marker.scale.x/2);
+			temp_points_max[1] = (temp_marker.pose.position.y + temp_marker.scale.y/2);
+			temp_points_max[2] = (temp_marker.pose.position.z + temp_marker.scale.z/2);
 			//temp_points_max.push_back(0); //Decay timer value
 
 			point_count++;
@@ -77,13 +68,13 @@ class cropBoxFilter{
 			min_points.push_back(temp_points_min);
 			max_points.push_back(temp_points_max);
 		}
-		point_count = 0;
+		/*point_count = 0;
 		decay.push_back(point_count);
 		if(decay.size() > 1){
 			min_points.erase(min_points.begin(), min_points.begin()+decay[0]);
 			max_points.erase(max_points.begin(), max_points.begin()+decay[0]);
 			decay.erase(decay.begin());
-		}
+		}*/
 	}
 
 	void objectFilter(const sensor_msgs::PointCloud2ConstPtr& msg){

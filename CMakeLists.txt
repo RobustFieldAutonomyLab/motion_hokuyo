@@ -73,3 +73,6 @@ target_link_libraries(object_detector_v3 ${catkin_LIBRARIES})
 
 add_executable(motion_filter_v3 motion_filter_v3.cpp)
 target_link_libraries(motion_filter_v3 ${catkin_LIBRARIES})
+
+#add_executable(velodyne_bound velodyne_bound.cpp)
+#target_link_libraries(velodyne_bound ${catkin_LIBRARIES})
