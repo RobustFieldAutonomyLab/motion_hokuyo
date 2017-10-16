@@ -32,6 +32,8 @@ class objectSegment{
 
 public:
 	objectSegment() {
+		inf = numeric_limits<float>::infinity();
+
 		boundingBox = 0.4;
 
 		min_object_size = 4;
@@ -285,6 +287,7 @@ private:
 	ros::Subscriber sub_cloud;
 	vector<vector<float> > ranges;
 	vector<vector<float> > decay_ranges;
+	float inf;
 };
 
 

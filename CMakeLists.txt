@@ -21,6 +21,17 @@ find_package(catkin REQUIRED COMPONENTS
 	)
 
 
+#find_package(catkin REQUIRED cmake_modules)
+#find_package(Eigen REQUIRED)
+
+#find_package(catkin REQUIRED cmake_modules)
+#find_package(Eigen REQUIRED)
+
+#include_directories(
+#   ...
+#   ${Eigen_INCLUDE_DIRS}
+# )
+
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
@@ -28,10 +39,10 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES motion_hokuyo
 #  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+#   DEPENDS system_lib
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS}) #${Eigen_LIBRARIES}
 include_directories(${PCL_INCLUDE_DIRS})
 
 add_executable(max_z max_z.cpp)
@@ -56,3 +67,9 @@ target_link_libraries(marker_array_pub_objects ${catkin_LIBRARIES})
 
 add_executable(plane_extract_ransac plane_extract_ransac.cpp)
 target_link_libraries(plane_extract_ransac ${catkin_LIBRARIES})
+
+add_executable(object_detector_rewrite object_detector_rewrite.cpp)
+target_link_libraries(object_detector_rewrite ${catkin_LIBRARIES})
+
+add_executable(motion_filter_rewrite motion_filter_rewrite.cpp)
+target_link_libraries(motion_filter_rewrite ${catkin_LIBRARIES})
