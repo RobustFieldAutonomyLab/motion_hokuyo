@@ -1,24 +1,13 @@
 #include <ros/ros.h>
-#include <vector>
-#include <cmath>
-#include <string>
 #include <std_msgs/Float32MultiArray.h>
-#include <std_msgs/MultiArrayLayout.h>
-#include <std_msgs/MultiArrayDimension.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h> 
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_types.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/conversions.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/point_cloud.h>
 #include <std_msgs/Float64.h>
-#include <pcl/common/transformation_from_correspondences.h>
-#include <pcl/filters/crop_box.h>
+
 
 using namespace std;
 typedef pcl::PointXYZI  PointType;
@@ -159,7 +148,7 @@ public:
 			double g = (rand() % 10)/10.0;
 			double b = (rand() % 10)/10.0;
 			
-			marker.header.frame_id = "/map";
+			marker.header.frame_id = "/velodyne";
 			marker.header.stamp = ros::Time::now();
 			marker.ns = "block_object_array";
 	    	marker.id = marker_id;
@@ -229,11 +218,6 @@ public:
 					}
 				}
 
-				/*for(int i = 0; i < min_max.size(); i++){
-					string  s = to_string(min_max[i]);// + "," + to_string(boundPoints[i][1]) + "," + to_string(boundPoints[i][2]);
-					ROS_INFO_STREAM(s);
-				}*/
-
 				old_size = boundPoints.size();
 				for(int j = 0; j < unboundPoints.size(); j++){  //Send all points inside bounding box, including the first reference point, to boundPoints								
 					//		X value bound 																			Y value bound 																	Z value bound
@@ -244,11 +228,6 @@ public:
 					}
 				}
 			}
-
-			/*for(int i = 0; i < boundPoints.size(); i++){
-				string  s = to_string(boundPoints[i][0]) + "," + to_string(boundPoints[i][1]) + "," + to_string(boundPoints[i][2]);
-				ROS_INFO_STREAM(s);
-			}*/
 
 			if(boundPoints.size() > min_object_size){
 				objects.push_back(boundPoints);
@@ -289,32 +268,6 @@ private:
 	vector<vector<float> > decay_ranges;
 	float inf;
 };
-
-
-/*void objectFilter(const sensor_msgs::PointCloud2ConstPtr& msg){
-	
-	pcl::PointCloud<PointType> cloud;
-	pcl::fromROSMsg(*msg, cloud);
-
-	Eigen::Vector4f minPoint; 
-      minPoint[0]=0;  // define minimum point x 
-      minPoint[1]=0;  // define minimum point y 
-      minPoint[2]=0;  // define minimum point z 
-     Eigen::Vector4f maxPoint; 
-      minPoint[0]=5;  // define max point x 
-      minPoint[1]=6;  // define max point y 
-      minPoint[2]=7;  // define max point z 
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloudIn(new pcl::PointCloud<pcl::PointXYZ>); 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOut (new pcl::PointCloud<pcl::PointXYZ>); 
-
-    pcl::CropBox<PointCloud2> cropFilter; 
-    cropFilter.setInputCloud (cloud); 
-    cropFilter.setMin(minPoint); 
-    cropFilter.setMax(maxPoint); 
-
-   	cropFilter.filter (*cloudOut); 
-}*/
 
 
 

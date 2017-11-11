@@ -32,10 +32,12 @@
 
     <node pkg="motion_hokuyo" type="object_detector_v3" name="object_detector"/>
 
+    <node pkg="motion_hokuyo" type="velodyne_bound" name="velodyne_bound"/>
+
     <arg name="path"/> 
     <arg name="speed" default="1"/> 
     <arg name="other" default=""/> 
     <arg name="topics" default=""/> 
-    <node pkg="rosbag" type="play" name="player" output="screen" args="$(arg path) -r $(arg speed) --topics tf velodyne_points scan --clock" />
+    <node pkg="rosbag" type="play" name="player" output="screen" args="$(arg path) -r $(arg speed) --topics /tf /velodyne_points /scan --clock" />
 
 </launch>

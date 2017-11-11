@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motion_hokuyo)
 
+
+
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3")
 
 find_package(catkin REQUIRED COMPONENTS 
@@ -19,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
 	geometry_msgs
 	nav_msgs
 	)
-
 
 #find_package(catkin REQUIRED cmake_modules)
 #find_package(Eigen REQUIRED)
@@ -74,5 +75,5 @@ target_link_libraries(object_detector_v3 ${catkin_LIBRARIES})
 add_executable(motion_filter_v3 motion_filter_v3.cpp)
 target_link_libraries(motion_filter_v3 ${catkin_LIBRARIES})
 
-#add_executable(velodyne_bound velodyne_bound.cpp)
-#target_link_libraries(velodyne_bound ${catkin_LIBRARIES})
+add_executable(velodyne_bound velodyne_bound.cpp)
+target_link_libraries(velodyne_bound ${catkin_LIBRARIES})
